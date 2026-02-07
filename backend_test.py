@@ -384,11 +384,47 @@ class SparkMateAPITester:
         messages_before = response
         message_count_before = len(messages_before)
         
-        # Note: In a real test, we would delete a message here
-        # For now, we'll just verify the endpoint works
-        print(f"📝 Found {message_count_before} messages before deletion")
-        
-        return True
+        # If we have a deleted message from the Pro user test, check if it's filtered out
+        if self.message_id:
+            # Get messages again to see if deleted message is filtered
+            success, response = self.run_test(
+                "Get Messages After Deletion",
+                "GET",
+                f"messages/{self.match_id}",
+                200
+            )
+            
+            if not success:
+                return False
+                
+            messages_after = response
+            
+            # Check if the deleted message is not in the response
+            deleted_message_found = False
+            for message in messages_after:
+                if message.get('id') == self.message_id:
+                    deleted_message_found = True
+                    break
+            
+            if not deleted_message_found:
+                print("✅ Deleted message successfully filtered out from response")
+                self.log_test(
+                    "Deleted Message Filtered Out",
+                    True,
+                    "Deleted messages are not returned in GET /messages"
+                )
+                return True
+            else:
+                print("❌ Deleted message still appears in response")
+                self.log_test(
+                    "Deleted Message Filtered Out",
+                    False,
+                    "Deleted message still appears in GET /messages response"
+                )
+                return False
+        else:
+            print(f"📝 Found {message_count_before} messages (no deletion test performed)")
+            return True
 
     def test_read_receipts_functionality(self):
         """Test read receipts and read_at timestamp functionality"""
