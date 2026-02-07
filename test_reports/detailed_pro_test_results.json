@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-02-07T07:06:10.366860",
+  "total_tests": 7,
+  "passed_tests": 5,
+  "success_rate": "71.4%",
+  "issues": [
+    "Non-Pro Delete Restriction: Expected 403, got No response",
+    "Read Receipt Timestamp: No read_at timestamp found"
+  ]
+}
