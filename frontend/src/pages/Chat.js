@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { API, AuthContext } from '../App';
 import { toast } from 'sonner';
-import { Send, ArrowLeft, MapPin, Image as ImageIcon, X } from 'lucide-react';
+import { Send, ArrowLeft, MapPin, Image as ImageIcon, X, Trash2, Check, CheckCheck } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const Chat = () => {
