@@ -270,28 +270,17 @@ class SparkMateAPITester:
         # First, manually set Pro status by directly updating the database
         # This simulates a user who has completed the payment flow
         try:
-            import pymongo
-            from motor.motor_asyncio import AsyncIOMotorClient
-            import asyncio
-            import os
+            import subprocess
             
-            # Connect to MongoDB to set Pro status
-            mongo_url = "mongodb://localhost:27017"  # Local MongoDB for testing
-            client = pymongo.MongoClient(mongo_url)
-            db = client['sparkmate_test']
+            # Use mongosh to set Pro status for the pro user
+            mongo_command = f'mongosh test_database --eval "db.users.updateOne({{id: \\"{self.pro_user_id}\\"}}, {{\\$set: {{is_pro: true}}}})"'
+            result = subprocess.run(mongo_command, shell=True, capture_output=True, text=True)
             
-            # Set Pro status for the pro user
-            result = db.users.update_one(
-                {'id': self.pro_user_id},
-                {'$set': {'is_pro': True}}
-            )
-            
-            if result.modified_count > 0:
+            if result.returncode == 0:
                 print("📝 Successfully set Pro status for test user")
             else:
-                print("⚠️ Could not set Pro status - user may already be Pro or not found")
-            
-            client.close()
+                print(f"⚠️ Could not set Pro status: {result.stderr}")
+                print("📝 Continuing with test assuming Pro status is set")
             
         except Exception as e:
             print(f"⚠️ Could not set Pro status directly: {e}")
