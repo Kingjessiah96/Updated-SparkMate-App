@@ -1,0 +1,103 @@
+{
+  "timestamp": "2026-02-07T07:05:30.811379",
+  "total_tests": 19,
+  "passed_tests": 19,
+  "success_rate": "100.0%",
+  "test_details": [
+    {
+      "test": "Register Regular User",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Register Pro User",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Create Regular User Profile",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Create Pro User Profile",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Regular User Likes Pro User",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Pro User Likes Regular User (Creates Match)",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Get Matches",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Send Message as Regular User",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Delete Message as Non-Pro User (Should Fail)",
+      "success": true,
+      "details": "Status: 403"
+    },
+    {
+      "test": "Send Message as Pro User",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Send Message as Regular User",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Try to Delete Other User's Message (Should Fail)",
+      "success": true,
+      "details": "Status: 403"
+    },
+    {
+      "test": "Get Messages Before Deletion",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Send Message for Read Receipt Test",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Get Messages as Regular User (Marks as Read)",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Read Receipt Timestamp Added",
+      "success": true,
+      "details": "Messages should have read_at timestamp when marked as read"
+    },
+    {
+      "test": "Send Text Message",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Send Photo Message",
+      "success": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "Send Location Message",
+      "success": true,
+      "details": "Status: 200"
+    }
+  ]
+}
