@@ -267,8 +267,35 @@ class SparkMateAPITester:
         """Test message deletion succeeds for Pro users"""
         print("\n✅ Testing message deletion for Pro users...")
         
-        # First, we need to manually set Pro status for testing
-        # In production, this would be done through payment flow
+        # First, manually set Pro status by directly updating the database
+        # This simulates a user who has completed the payment flow
+        try:
+            import pymongo
+            from motor.motor_asyncio import AsyncIOMotorClient
+            import asyncio
+            import os
+            
+            # Connect to MongoDB to set Pro status
+            mongo_url = "mongodb://localhost:27017"  # Local MongoDB for testing
+            client = pymongo.MongoClient(mongo_url)
+            db = client['sparkmate_test']
+            
+            # Set Pro status for the pro user
+            result = db.users.update_one(
+                {'id': self.pro_user_id},
+                {'$set': {'is_pro': True}}
+            )
+            
+            if result.modified_count > 0:
+                print("📝 Successfully set Pro status for test user")
+            else:
+                print("⚠️ Could not set Pro status - user may already be Pro or not found")
+            
+            client.close()
+            
+        except Exception as e:
+            print(f"⚠️ Could not set Pro status directly: {e}")
+            print("📝 Continuing with test assuming Pro status is set")
         
         # Send message as Pro user
         self.token = self.pro_token
@@ -289,11 +316,20 @@ class SparkMateAPITester:
             
         self.message_id = response.get('message_id')
         
-        # For testing purposes, we'll simulate Pro status
-        # Note: In production, Pro status would be verified through subscription
-        print("📝 Note: Simulating Pro user status for deletion test")
+        # Now try to delete the message (should succeed for Pro user)
+        success, response = self.run_test(
+            "Delete Message as Pro User (Should Succeed)",
+            "DELETE",
+            f"messages/{self.message_id}",
+            200
+        )
         
-        return True
+        if success:
+            print("✅ Pro user successfully deleted their message")
+        else:
+            print("❌ Pro user could not delete their message")
+        
+        return success
 
     def test_message_ownership_check(self):
         """Test users can only delete their own messages"""
