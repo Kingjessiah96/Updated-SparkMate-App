@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "SparkMate",
+    "slug": "sparkmate-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sparkmate.mobile"
+    },
+    "android": {
+      "package": "com.sparkmate.mobile"
+    }
+  }
+}
