@@ -23,14 +23,18 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
       fetchUserData();
+    } else {
+      setLoading(false);
     }
   }, [token]);
 
   const fetchUserData = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(`${API}/profile/me`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -41,6 +45,13 @@ function App() {
       if (error.response?.status === 404) {
         setProfile(null);
       }
+      if (error.response?.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        setToken(null);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,6 +66,15 @@ function App() {
     setUser(null);
     setProfile(null);
   };
+
+  // Show loading while fetching user data
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ token, user, profile, login, logout, fetchUserData }}>
