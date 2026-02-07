@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-07T07:11:07.933842",
+  "timestamp": "2026-02-07T07:11:46.520284",
   "total_tests": 22,
-  "passed_tests": 20,
-  "success_rate": "90.9%",
+  "passed_tests": 22,
+  "success_rate": "100.0%",
   "test_details": [
     {
       "test": "Register Regular User",
@@ -56,8 +56,8 @@
     },
     {
       "test": "Delete Message as Pro User (Should Succeed)",
-      "success": false,
-      "details": "Status: 403, Expected: 200, Response: {'detail': 'Pro subscription required to delete messages'}"
+      "success": true,
+      "details": "Status: 200"
     },
     {
       "test": "Send Message as Regular User",
@@ -81,8 +81,8 @@
     },
     {
       "test": "Deleted Message Filtered Out",
-      "success": false,
-      "details": "Deleted message still appears in GET /messages response"
+      "success": true,
+      "details": "Deleted messages are not returned in GET /messages"
     },
     {
       "test": "Send Message for Read Receipt Test",
