@@ -16,12 +16,15 @@ const Chat = () => {
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [photoUrlInput, setPhotoUrlInput] = useState('');
+  const [isPro, setIsPro] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     fetchMatch();
     fetchMessages();
     fetchUploadedPhotos();
+    fetchUserStatus();
     const interval = setInterval(fetchMessages, 3000);
     return () => clearInterval(interval);
   }, [matchId]);
@@ -32,6 +35,17 @@ const Chat = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const fetchUserStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/user/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setIsPro(response.data.is_pro);
+    } catch (error) {
+      console.error('Failed to fetch user status');
+    }
   };
 
   const fetchMatch = async () => {
