@@ -264,56 +264,84 @@ const Chat = () => {
               className={`flex ${message.sender_id === profile?.user_id ? 'justify-end' : 'justify-start'}`}
               data-testid="message"
             >
-              <div
-                className={`max-w-[70%] rounded-2xl overflow-hidden ${
-                  message.sender_id === profile?.user_id
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                    : 'glass-card-dark text-white'
-                }`}
-              >
-                {/* Text message */}
-                {message.message_type === 'text' && (
-                  <div className="p-3">
-                    <p>{message.content}</p>
-                  </div>
+              <div className={`relative group max-w-[70%]`}>
+                {/* Delete button for sent messages (Pro only) */}
+                {message.sender_id === profile?.user_id && isPro && (
+                  <button
+                    onClick={() => deleteMessage(message.id)}
+                    disabled={deletingId === message.id}
+                    className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 rounded-full bg-red-500/80 hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                    data-testid="delete-message-button"
+                    title="Delete message"
+                  >
+                    <Trash2 className="w-4 h-4 text-white" />
+                  </button>
                 )}
-
-                {/* Photo message */}
-                {message.message_type === 'photo' && message.photo_url && (
-                  <div>
-                    <img src={message.photo_url} alt="Shared" className="w-full max-w-xs" />
-                    {message.content && message.content !== 'Sent a photo' && (
-                      <div className="p-3">
-                        <p>{message.content}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Location message */}
-                {message.message_type === 'location' && message.latitude && message.longitude && (
-                  <div className="p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="w-5 h-5" />
-                      <span className="font-bold">Shared Location</span>
+                
+                <div
+                  className={`rounded-2xl overflow-hidden ${
+                    message.sender_id === profile?.user_id
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                      : 'glass-card-dark text-white'
+                  }`}
+                >
+                  {/* Text message */}
+                  {message.message_type === 'text' && (
+                    <div className="p-3">
+                      <p>{message.content}</p>
                     </div>
-                    <button
-                      onClick={() => openMap(message.latitude, message.longitude)}
-                      className="text-sm underline hover:no-underline"
-                    >
-                      View on Map
-                    </button>
-                  </div>
-                )}
+                  )}
 
-                {/* Timestamp */}
-                <div className="px-3 pb-2">
-                  <div className="flex items-center gap-1">
-                    <p className="text-xs opacity-70">
-                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    {message.read && message.sender_id === profile?.user_id && (
-                      <span className="text-xs opacity-70">• Read</span>
+                  {/* Photo message */}
+                  {message.message_type === 'photo' && message.photo_url && (
+                    <div>
+                      <img src={message.photo_url} alt="Shared" className="w-full max-w-xs" />
+                      {message.content && message.content !== 'Sent a photo' && (
+                        <div className="p-3">
+                          <p>{message.content}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Location message */}
+                  {message.message_type === 'location' && message.latitude && message.longitude && (
+                    <div className="p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="w-5 h-5" />
+                        <span className="font-bold">Shared Location</span>
+                      </div>
+                      <button
+                        onClick={() => openMap(message.latitude, message.longitude)}
+                        className="text-sm underline hover:no-underline"
+                      >
+                        View on Map
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Timestamp and Read Receipt */}
+                  <div className="px-3 pb-2">
+                    <div className="flex items-center gap-1 justify-end">
+                      <p className="text-xs opacity-70">
+                        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {/* Read receipts for sent messages (Pro feature) */}
+                      {message.sender_id === profile?.user_id && isPro && (
+                        <span className="ml-1" title={message.read ? formatReadTime(message.read_at) : 'Sent'}>
+                          {message.read ? (
+                            <CheckCheck className="w-4 h-4 text-blue-300" />
+                          ) : (
+                            <Check className="w-4 h-4 opacity-70" />
+                          )}
+                        </span>
+                      )}
+                    </div>
+                    {/* Show read time on hover for Pro users */}
+                    {message.sender_id === profile?.user_id && isPro && message.read && message.read_at && (
+                      <p className="text-xs opacity-60 text-right">
+                        {formatReadTime(message.read_at)}
+                      </p>
                     )}
                   </div>
                 </div>
