@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { API, AuthContext } from '../App';
 import { toast } from 'sonner';
-import { Send, ArrowLeft, MapPin, Image as ImageIcon, X, Trash2, Check, CheckCheck } from 'lucide-react';
+import { Send, ArrowLeft, MapPin, Image as ImageIcon, X, Trash2, Check, CheckCheck, Crown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const Chat = () => {
@@ -18,7 +18,10 @@ const Chat = () => {
   const [photoUrlInput, setPhotoUrlInput] = useState('');
   const [isPro, setIsPro] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const messagesEndRef = useRef(null);
+  const longPressTimer = useRef(null);
 
   useEffect(() => {
     fetchMatch();
@@ -141,14 +144,12 @@ const Chat = () => {
     }
 
     try {
-      // Save to uploaded photos
       await axios.post(
         `${API}/uploaded-photos`,
         { photo_url: photoUrlInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Send as message
       await axios.post(
         `${API}/messages`,
         {
@@ -194,23 +195,47 @@ const Chat = () => {
     window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
   };
 
-  const deleteMessage = async (messageId) => {
+  // Long press handlers for message deletion
+  const handleMessagePressStart = (message) => {
+    // Only allow long press on own messages
+    if (message.sender_id !== profile?.user_id) return;
+    
+    longPressTimer.current = setTimeout(() => {
+      setSelectedMessage(message);
+      setShowDeleteModal(true);
+    }, 500); // 500ms long press
+  };
+
+  const handleMessagePressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const deleteMessage = async () => {
+    if (!selectedMessage) return;
+    
     if (!isPro) {
-      toast.error('Pro subscription required to delete messages');
+      setShowDeleteModal(false);
+      toast.error('Pro subscription required to unsend messages');
+      navigate('/subscription');
       return;
     }
     
-    setDeletingId(messageId);
+    setDeletingId(selectedMessage.id);
     try {
-      await axios.delete(`${API}/messages/${messageId}`, {
+      await axios.delete(`${API}/messages/${selectedMessage.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Message deleted');
+      toast.success('Message unsent');
       fetchMessages();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to delete message');
+      toast.error(error.response?.data?.detail || 'Failed to unsend message');
     } finally {
       setDeletingId(null);
+      setShowDeleteModal(false);
+      setSelectedMessage(null);
     }
   };
 
@@ -228,9 +253,83 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen flex flex-col" data-testid="chat-page">
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div 
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowDeleteModal(false)}
+          data-testid="delete-modal-overlay"
+        >
+          <div 
+            className="glass-card p-6 rounded-2xl max-w-sm w-full animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+            data-testid="delete-modal"
+          >
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8 text-red-400" />
+              </div>
+              <h3 className="text-white text-xl font-bold mb-2">Unsend Message?</h3>
+              <p className="text-white/70 text-sm">
+                This message will be removed from the conversation for both you and {match?.other_user?.name}.
+              </p>
+              
+              {!isPro && (
+                <div className="mt-4 p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30">
+                  <div className="flex items-center justify-center gap-2 text-yellow-400 mb-1">
+                    <Crown className="w-5 h-5" />
+                    <span className="font-bold">Pro Feature</span>
+                  </div>
+                  <p className="text-white/70 text-xs">
+                    Upgrade to Pro to unsend messages and photos
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedMessage(null);
+                }}
+                className="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
+                data-testid="cancel-delete-button"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteMessage}
+                disabled={deletingId === selectedMessage?.id}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
+                  isPro 
+                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                    : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white'
+                } disabled:opacity-50`}
+                data-testid="confirm-delete-button"
+              >
+                {deletingId === selectedMessage?.id ? (
+                  <span>Deleting...</span>
+                ) : isPro ? (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Unsend</span>
+                  </>
+                ) : (
+                  <>
+                    <Crown className="w-4 h-4" />
+                    <span>Upgrade</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="glass-card p-4 flex items-center gap-4 sticky top-0 z-10">
-        <button onClick={() => navigate('/matches')} className="text-white" data-testid="back-button">
+        <button onClick={() => navigate('/dms')} className="text-white" data-testid="back-button">
           <ArrowLeft className="w-6 h-6" />
         </button>
         {match?.other_user && (
@@ -264,20 +363,21 @@ const Chat = () => {
               className={`flex ${message.sender_id === profile?.user_id ? 'justify-end' : 'justify-start'}`}
               data-testid="message"
             >
-              <div className={`relative group max-w-[70%]`}>
-                {/* Delete button for sent messages (Pro only) */}
-                {message.sender_id === profile?.user_id && isPro && (
-                  <button
-                    onClick={() => deleteMessage(message.id)}
-                    disabled={deletingId === message.id}
-                    className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 rounded-full bg-red-500/80 hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                    data-testid="delete-message-button"
-                    title="Delete message"
-                  >
-                    <Trash2 className="w-4 h-4 text-white" />
-                  </button>
-                )}
-                
+              <div 
+                className={`relative max-w-[70%] ${message.sender_id === profile?.user_id ? 'cursor-pointer select-none' : ''}`}
+                onMouseDown={() => handleMessagePressStart(message)}
+                onMouseUp={handleMessagePressEnd}
+                onMouseLeave={handleMessagePressEnd}
+                onTouchStart={() => handleMessagePressStart(message)}
+                onTouchEnd={handleMessagePressEnd}
+                onContextMenu={(e) => {
+                  if (message.sender_id === profile?.user_id) {
+                    e.preventDefault();
+                    setSelectedMessage(message);
+                    setShowDeleteModal(true);
+                  }
+                }}
+              >
                 <div
                   className={`rounded-2xl overflow-hidden ${
                     message.sender_id === profile?.user_id
@@ -337,7 +437,7 @@ const Chat = () => {
                         </span>
                       )}
                     </div>
-                    {/* Show read time on hover for Pro users */}
+                    {/* Show read time for Pro users */}
                     {message.sender_id === profile?.user_id && isPro && message.read && message.read_at && (
                       <p className="text-xs opacity-60 text-right">
                         {formatReadTime(message.read_at)}
@@ -345,6 +445,13 @@ const Chat = () => {
                     )}
                   </div>
                 </div>
+                
+                {/* Long press hint for own messages */}
+                {message.sender_id === profile?.user_id && (
+                  <p className="text-xs text-white/40 text-right mt-1 opacity-0 hover:opacity-100 transition-opacity">
+                    Hold to unsend
+                  </p>
+                )}
               </div>
             </div>
           ))
@@ -362,7 +469,6 @@ const Chat = () => {
             </button>
           </div>
 
-          {/* Upload new photo */}
           <div className="mb-4">
             <div className="flex gap-2">
               <input
@@ -379,7 +485,6 @@ const Chat = () => {
             </div>
           </div>
 
-          {/* Recently uploaded */}
           {uploadedPhotos.length > 0 && (
             <div>
               <p className="text-white/70 text-sm mb-2">Recently Uploaded</p>
