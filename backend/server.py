@@ -700,15 +700,40 @@ async def get_messages(match_id: str, current_user = Depends(get_current_user)):
     if current_user['id'] not in [match['user1_id'], match['user2_id']]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    if current_user['is_pro']:
-        other_user_id = match['user2_id'] if match['user1_id'] == current_user['id'] else match['user1_id']
-        await db.messages.update_many(
-            {'match_id': match_id, 'sender_id': other_user_id},
-            {'$set': {'read': True}}
-        )
+    # Mark messages as read and add read_at timestamp for Pro users
+    other_user_id = match['user2_id'] if match['user1_id'] == current_user['id'] else match['user1_id']
+    read_at_time = datetime.now(timezone.utc).isoformat()
+    await db.messages.update_many(
+        {'match_id': match_id, 'sender_id': other_user_id, 'read': False},
+        {'$set': {'read': True, 'read_at': read_at_time}}
+    )
     
-    messages = await db.messages.find({'match_id': match_id}, {'_id': 0}).sort('timestamp', 1).to_list(1000)
+    messages = await db.messages.find({'match_id': match_id, 'deleted': {'$ne': True}}, {'_id': 0}).sort('timestamp', 1).to_list(1000)
     return messages
+
+# Delete message endpoint (Pro feature)
+@api_router.delete("/messages/{message_id}")
+async def delete_message(message_id: str, current_user = Depends(get_current_user)):
+    # Check if user is Pro
+    if not current_user.get('is_pro'):
+        raise HTTPException(status_code=403, detail="Pro subscription required to delete messages")
+    
+    # Find the message
+    message = await db.messages.find_one({'id': message_id}, {'_id': 0})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Only the sender can delete their own messages
+    if message['sender_id'] != current_user['id']:
+        raise HTTPException(status_code=403, detail="You can only delete your own messages")
+    
+    # Soft delete the message (mark as deleted)
+    await db.messages.update_one(
+        {'id': message_id},
+        {'$set': {'deleted': True, 'deleted_at': datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {'message': 'Message deleted successfully'}
 
 # Uploaded Photos Routes
 @api_router.post("/uploaded-photos")
