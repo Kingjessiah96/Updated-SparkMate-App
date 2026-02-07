@@ -194,6 +194,38 @@ const Chat = () => {
     window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
   };
 
+  const deleteMessage = async (messageId) => {
+    if (!isPro) {
+      toast.error('Pro subscription required to delete messages');
+      return;
+    }
+    
+    setDeletingId(messageId);
+    try {
+      await axios.delete(`${API}/messages/${messageId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Message deleted');
+      fetchMessages();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete message');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const formatReadTime = (readAt) => {
+    if (!readAt) return null;
+    const date = new Date(readAt);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return `Read at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    return `Read ${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
   return (
     <div className="min-h-screen flex flex-col" data-testid="chat-page">
       {/* Header */}
